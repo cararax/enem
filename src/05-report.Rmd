@@ -1,0 +1,233 @@
+---
+title: "Desigualdade Regional no ENEM (2015-2023):"
+subtitle: "como escola, raça e gênero explicam as diferenças de desempenho entre os estados brasileiros"
+author: "Introdução à Ciência de Dados — UFSM"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+highlight: tango
+geometry: "left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm"
+fontsize: 12pt
+params:
+  root: "."
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center")
+library(dplyr)
+library(knitr)
+
+# resolve paths relativos à raiz do projeto
+root <- params$root
+img <- function(f) file.path(root, "output", f)
+
+tabs <- readRDS(file.path(root, "data/processed/tabelas_resumo.rds"))
+n_total <- format(nrow(readRDS(file.path(root, "data/processed/enem_wrangled.rds"))),
+                  big.mark = ".", decimal.mark = ",")
+```
+
+# Resumo
+
+Este trabalho analisa os microdados do ENEM de 2015 a 2023, investigando como
+fatores como tipo de escola (pública ou privada), cor/raça, sexo e faixa etária
+se associam ao desempenho dos participantes nas provas objetivas e na redação,
+com recorte regional. Os resultados mostram que o tipo de escola é o fator de
+maior impacto --- estudantes de escolas privadas obtêm, em média, 91 pontos a
+mais em Exatas. Desigualdades raciais e de gênero também são significativas,
+mas variam entre as regiões: o Sudeste apresenta o maior gap racial (49 pontos
+entre brancos e pretos), enquanto o Centro-Oeste lidera na desigualdade entre
+escolas públicas e privadas (92 pontos).
+
+# Introdução
+
+O Exame Nacional do Ensino Médio (ENEM), aplicado pelo INEP, é a principal
+porta de entrada para o ensino superior no Brasil. Seus microdados,
+disponibilizados anualmente, contêm informações detalhadas sobre o perfil dos
+participantes, suas trajetórias educacionais e o desempenho nas provas. Esta
+riqueza de dados permite investigar padrões de desigualdade educacional no país.
+
+Este estudo utiliza os microdados do ENEM de 2015 a 2023, contemplando as
+seguintes variáveis:
+
+- **Perfil dos participantes**: faixa etária, sexo, cor/raça
+- **Características educacionais**: tipo de escola (pública/privada)
+- **Desempenho**: notas em Ciências da Natureza (CN), Ciências Humanas (CH),
+  Linguagens e Códigos (LC), Matemática (MT) e Redação
+
+O recorte temático escolhido foi a **desigualdade regional**: como escola, raça
+e gênero se combinam para produzir padrões de desempenho distintos nas cinco
+regiões brasileiras.
+
+## Metodologia
+
+A base de dados original contém aproximadamente 50 milhões de registros. Foram
+aplicados os seguintes filtros:
+
+- Participantes **presentes em todas as quatro provas objetivas**
+- **Não treineiros** (que já concluíram ou concluiriam o ensino médio no ano
+  da prova)
+- Redações **válidas** (status "sem problemas")
+
+Após os filtros, a amostra final contém `r n_total` participantes.
+
+As notas foram agregadas em dois índices:
+- **Exatas**: média de CN e MT
+- **Humanas**: média de CH e LC
+
+A variável cor/raça foi agrupada em quatro categorias (Branca, Preta, Parda,
+Outros), e a faixa etária em intervalos de cinco anos.
+
+# Análise Exploratória dos Dados
+
+## Evolução Temporal (2015-2023)
+
+```{r g1, out.width="90%"}
+knitr::include_graphics(img("01-evolucao_temporal.png"))
+```
+
+A redação apresentou o crescimento mais expressivo, saltando de 546 pontos em
+2015 para 670 em 2023 --- um aumento de 124 pontos. As notas de Exatas também
+subiram, de 476 para 527, enquanto Humanas se manteve praticamente estável em
+torno de 528 pontos. O ano de 2020 marca uma inflexão visível no desempenho de
+Exatas e Redação.
+
+## Desempenho por Região
+
+```{r g2, out.width="90%"}
+knitr::include_graphics(img("02-desempenho_regiao.png"))
+```
+
+O Sudeste lidera em todas as categorias, seguido pelo Sul. Norte e Nordeste
+ocupam as últimas posições. A diferença entre Sudeste e Norte é de
+aproximadamente 42 pontos em Exatas e 37 pontos em Redação.
+
+```{r regiao_tabela}
+kable(tabs$p2, digits = 1,
+      col.names = c("Região", "N", "Exatas", "Humanas", "Redação"),
+      caption = "Desempenho médio por região.")
+```
+
+### Evolução por Região
+
+```{r g9, out.width="90%"}
+knitr::include_graphics(img("09-evolucao_regiao.png"))
+```
+
+Todas as regiões acompanharam a tendência nacional de alta em Exatas, com
+destaque para o Sudeste, que manteve a liderança em todo o período. Nenhuma
+região ultrapassou outra --- o ranking regional permaneceu estável ao longo dos
+nove anos.
+
+## Escola Pública vs Privada
+
+```{r g3, out.width="90%"}
+knitr::include_graphics(img("03-escola_publica_privada.png"))
+```
+
+```{r g4, out.width="90%"}
+knitr::include_graphics(img("04-gap_escola_regiao.png"))
+```
+
+A diferença entre escolas privadas e públicas é o fator de maior impacto no
+desempenho. Em Exatas, a média da rede privada (575) supera a da pública (484)
+em 91 pontos. O gap varia de 80 pontos no Norte a 92 pontos no Centro-Oeste.
+
+```{r escola_tabela}
+kable(tabs$p3c, digits = 1,
+      col.names = c("Região", "Privada", "Pública", "Gap"),
+      caption = "Nota média em Exatas e gap escola por região.")
+```
+
+## Desigualdade Racial
+
+```{r g5, out.width="90%"}
+knitr::include_graphics(img("05-desempenho_raca_regiao.png"))
+```
+
+Em todas as regiões, participantes brancos apresentam as maiores médias,
+seguidos por pardos e pretos. O gap entre brancos e pretos em Exatas é de 47
+pontos na média nacional, mas varia significativamente entre regiões: é maior
+no Sudeste (49 pontos) e menor no Norte (29 pontos). Esse padrão sugere que a
+desigualdade racial se intensifica nas regiões mais desenvolvidas.
+
+```{r raca_tabela}
+kable(tabs$p4, digits = 1,
+      col.names = c("Raça", "N", "Exatas", "Humanas", "Redação"),
+      caption = "Desempenho médio por raça/cor.")
+```
+
+## Diferenças de Gênero
+
+```{r g6, out.width="90%"}
+knitr::include_graphics(img("06-desempenho_sexo.png"))
+```
+
+Homens têm desempenho superior em Matemática (539 vs 499) e Ciências da
+Natureza (501 vs 480). Mulheres se destacam em Redação (592 vs 569) e há
+equilíbrio em Linguagens. Em Ciências Humanas, os homens têm leve vantagem
+(540 vs 528).
+
+## Faixa Etária
+
+```{r g7, out.width="90%"}
+knitr::include_graphics(img("07-faixa_etaria.png"))
+```
+
+O desempenho diminui com o avanço da idade. Participantes de até 19 anos (que
+correspondem a 93% da amostra) têm as maiores médias em todas as categorias. A
+partir dos 20 anos, as médias caem significativamente e continuam declinando
+nas faixas seguintes. Vale notar que as faixas mais velhas têm amostras
+reduzidas, o que limita a generalização dos resultados.
+
+## Síntese das Desigualdades
+
+```{r g8, out.width="90%"}
+knitr::include_graphics(img("08-sintese_desigualdades.png"))
+```
+
+```{r gaps_tabela}
+kable(tabs$gaps, digits = 1,
+      col.names = c("Região", "N", "Gap Escola", "Gap Raça", "Gap Sexo"),
+      caption = "Síntese dos gaps de desigualdade em Exatas por região.")
+```
+
+A tabela-síntese revela que:
+
+- O **gap escola** (privada $-$ pública) é o maior dos três indicadores em
+  todas as regiões, variando de 80 a 92 pontos
+- O **gap racial** (branco $-$ preto) é mais intenso no Sudeste (49 pontos) e
+  menor no Norte (29 pontos)
+- O **gap de gênero** (masculino $-$ feminino em Exatas) é relativamente
+  homogêneo entre as regiões, variando de 23 a 33 pontos
+
+# Conclusões
+
+A análise dos microdados do ENEM de 2015 a 2023 permitiu identificar padrões
+consistentes de desigualdade educacional no Brasil:
+
+1. **Escola pública vs privada** é o fator que mais fortemente se associa ao
+   desempenho, com um gap médio de 91 pontos em Exatas. Esse resultado reflete
+   as desigualdades estruturais da educação brasileira.
+
+2. **Desigualdades raciais** persistem em todas as regiões, mas são mais
+   acentuadas no Sudeste, indicando que o desenvolvimento econômico não
+   elimina --- e pode até ampliar --- disparidades raciais no acesso à
+   educação de qualidade.
+
+3. **Diferenças de gênero** seguem padrões esperados: homens com melhor
+   desempenho em exatas, mulheres em redação.
+
+4. **A redação** apresentou crescimento expressivo ao longo do período, com
+   aumento de 124 pontos entre 2015 e 2023, merecendo investigação mais
+   aprofundada sobre possíveis mudanças nos critérios de correção.
+
+5. **Regionalmente**, o ranking de desempenho (Sudeste $>$ Sul $>$ Centro-Oeste
+   $>$ Nordeste $>$ Norte) manteve-se estável ao longo dos nove anos, indicando
+   que as desigualdades regionais são persistentes.
+
+Os resultados reforçam a importância de políticas públicas que ataquem
+simultaneamente as múltiplas dimensões da desigualdade educacional ---
+regional, racial, de gênero e de acesso à escola de qualidade.
