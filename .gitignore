@@ -16,14 +16,17 @@ data/processed/*
 # Outputs
 output/*
 !output/.gitkeep
+!output/*.png
+!output/*.pdf
 
 # OS
 .DS_Store
 Thumbs.db
 
-# PDFs (track source, not compiled)
+# PDFs (track source and output, not compiled elsewhere)
 *.pdf
 !source/*.pdf
+!output/*.pdf
 
 # Node
 node_modules/
